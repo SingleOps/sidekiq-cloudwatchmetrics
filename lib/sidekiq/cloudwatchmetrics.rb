@@ -35,6 +35,15 @@ module Sidekiq::CloudWatchMetrics
 
   class Publisher
     include Sidekiq::Util
+    # SingleOps CUSTOM for Sidekiq v3 Support
+    # Copy the Sidekiq.Util.safe_thread method not included in v3
+    # https://www.rubydoc.info/github/mperham/sidekiq/Sidekiq/Util#safe_thread-instance_method
+    def safe_thread(name, &block)
+      Thread.new do
+        Thread.current.name = name
+        watchdog(name, &block)
+      end
+    end
 
     INTERVAL = 60 # seconds
 
@@ -116,24 +125,25 @@ module Sidekiq::CloudWatchMetrics
           value: stats.dead_size,
           unit: "Count",
         },
-        {
-          metric_name: "Workers",
-          timestamp: now,
-          value: stats.workers_size,
-          unit: "Count",
-        },
-        {
-          metric_name: "Processes",
-          timestamp: now,
-          value: stats.processes_size,
-          unit: "Count",
-        },
-        {
-          metric_name: "DefaultQueueLatency",
-          timestamp: now,
-          value: stats.default_queue_latency,
-          unit: "Seconds",
-        },
+        # Not in Sidekiq v3
+        # {
+        #   metric_name: "Workers",
+        #   timestamp: now,
+        #   value: stats.workers_size,
+        #   unit: "Count",
+        # },
+        # {
+        #   metric_name: "Processes",
+        #   timestamp: now,
+        #   value: stats.processes_size,
+        #   unit: "Count",
+        # },
+        # {
+        #   metric_name: "DefaultQueueLatency",
+        #   timestamp: now,
+        #   value: stats.default_queue_latency,
+        #   unit: "Seconds",
+        # },
         {
           metric_name: "Capacity",
           timestamp: now,
